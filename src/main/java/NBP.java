@@ -12,51 +12,24 @@ public class NBP {
 
     public static void main(String[] args) throws IOException {
 
-        LocalDate now = LocalDate.now(); //w dni wolne, i po północy do 9:00 nie ma plików, dla tego jest -1 zeby mozna bylo testowac na starych danych
-        LocalDate before = now.minusMonths(1); // jesli miesiac temu byl dzien wolnu, rowniez nie ma danych
+        LocalDate now = LocalDate.now();
+        LocalDate before = now.minusMonths(1);
 
         String[] curencies = {"usd", "eur", "gbp", "chf"};
         String[] midLinkArray = new String[curencies.length];
         String[] bidLinkArray = new String[curencies.length];
-//        for (int i =0; i < curencies.length; i++) {
-//            midLinkArray[i] = "http://api.nbp.pl/api/exchangerates/rates/a/" + curencies[i] + "/" + now;
-//        }
-
-//        String usdMid = ("http://api.nbp.pl/api/exchangerates/rates/a/usd/" + now); // na pewno mozna jakos prosciej te linki generować ??
-//        String euroMid = "http://api.nbp.pl/api/exchangerates/rates/a/eur/" + now;
-//        String funtMid = "http://api.nbp.pl/api/exchangerates/rates/a/gbp/" + now;
-//        String frankMid = "http://api.nbp.pl/api/exchangerates/rates/a/chf/" + now;
-//
-//        String usdBid = "http://api.nbp.pl/api/exchangerates/rates/c/usd/" + now;
-//        String euroBid = "http://api.nbp.pl/api/exchangerates/rates/c/eur/" + now;
-//        String funtBid = "http://api.nbp.pl/api/exchangerates/rates/c/gbp/" + now;
-//        String frankBid = "http://api.nbp.pl/api/exchangerates/rates/c/chf/" + now;
-//
-//        String [] midLinkArray = {usdMid, euroMid, funtMid, frankMid};
-//        String [] bidLinkArray = {usdBid, euroBid, funtBid, frankBid};
 
 //        Wyświetl kursy średnie 4 walut dzisiaj
         showAverageCourses(now, curencies, midLinkArray);
         //        Wyświetl kursy średnie 4 walut miesiąc temu
         showAverageCourses(before, curencies, midLinkArray);
-        showBidRate(bidLinkArray);
-        showAskRate(bidLinkArray);
-
-        //        Ile kupimy waluty za 100 PLN?
-        for (int i = 0; i <bidLinkArray.length; i++) {
-            System.out.println("za 100PLN mozesz kupić "
-                    + (100 / Double.parseDouble(getExchangeAskRate(getNbpApiJson(bidLinkArray[i]))))
-                    + " " + getCurrencyCode(getNbpApiJson(bidLinkArray[i])));
-        }
-    }
-
-    private static void showBidRate(String[] bidLinkArray) throws IOException {
-        System.out.println("Kurs Kupna");
-        for (int i = 0; i <bidLinkArray.length; i++) {
-            Exchange nbpBidApiJson = getNbpApiJson(bidLinkArray[i]);
-            System.out.println(getCurrencyCode(nbpBidApiJson)
-                    + " " + getExchangeBidRate(nbpBidApiJson) + "PLN");
-        }
+//        System.out.println("Kurs Kupna");
+//        for (int i = 0; i <bidLinkArray.length; i++) {
+//            Exchange nbpBidApiJson = getNbpApiJson(bidLinkArray[i]);
+//            System.out.println(getCurrencyCode(nbpBidApiJson)
+//                    + " " + getExchangeBidRate(nbpBidApiJson) + "PLN");
+//        }
+//        showAskRate(bidLinkArray);
     }
 
     private static void showAskRate(String[] bidLinkArray) throws IOException {
@@ -84,13 +57,12 @@ public class NBP {
         }
         System.out.println("Dane z dnia " + now);
     }
-
-
-
-
-
-
-
+////        Ile kupimy waluty za 100 PLN?
+//        for (int i = 0; i <bidLinkArray.length; i++) {
+//            System.out.println("za 100PLN mozesz kupić "
+//                    + (100 / Double.parseDouble(getExchangeAskRate(getNbpApiJson(bidLinkArray[i]))))
+//                    + " " + getCurrencyCode(getNbpApiJson(bidLinkArray[i])));
+//        }
 
 //        Ile zarobimy/stracimy przez miesiac?
 //        Double BidRate = Double.parseDouble(getExchangeAskRate(getNbpApiJson("http://api.nbp.pl/api/exchangerates/rates/c/usd/" + now)));
@@ -107,12 +79,14 @@ public class NBP {
             URL page = new URL(link);
             URLConnection connection = page.openConnection();
 
-            InputStream inputStream = connection.getInputStream();
+            try (InputStream inputStream = connection.getInputStream();
+                 Scanner scanner = new Scanner(inputStream);
+            ) {
 
-            Scanner scanner = new Scanner(inputStream);
-            String nbpApiJson = scanner.nextLine();
-            Gson gson = new Gson();
-            return gson.fromJson(nbpApiJson, Exchange.class);
+                String nbpApiJson = scanner.nextLine();
+                Gson gson = new Gson();
+                return gson.fromJson(nbpApiJson, Exchange.class);
+            }
     }
 
     public static String getExchangeMidRate(Exchange exchange){
